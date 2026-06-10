@@ -29,73 +29,98 @@
 # 2번 열: 추천 기분
 # 3번 열: 활동 유형
 # ------------------------------------------------------------
-
-activities = [
-    ["산책하기", 30, "피곤", "운동"],
-    ["짧은 낮잠", 20, "피곤", "휴식"],
-    ["좋아하는 음악 듣기", 10, "우울", "휴식"],
-    ["문제집 3쪽 풀기", 40, "차분", "공부"],
-    ["방 정리하기", 25, "답답", "생활"],
-    ["친구에게 연락하기", 15, "우울", "소통"],
+# ==========================================
+# [1단계] 데이터 구조 정의 (2차원 리스트)
+# ==========================================
+# 'W': 벽, '.': 길, 'P': 링크(플레이어), 'E': 경비병, 'Z': 젤다 공주
+castle_map = [
+    ["W", "W", "W", "W", "W"],
+    ["W", "P", ".", "E", "W"],
+    ["W", ".", "W", ".", "W"],
+    ["W", "E", ".", "Z", "W"],
+    ["W", "W", "W", "W", "W"]
 ]
 
+# 링크의 현재 위치 기억 (행: row, 열: col) -> 시작점 castle_map[1][1]이 'P'
+player_row = 1
+player_col = 1
+player_hp = 20  # 링크의 체력
 
-# ------------------------------------------------------------
-# 2. 함수 정의
-# ------------------------------------------------------------
+# ==========================================
+# [2단계] 함수 정의 - 지도와 상태 출력하기
+# ==========================================
+def display_game(map_data, hp):
+    """
+    현재 하이랄 성의 맵 상태와 링크의 체력을 화면에 출력하는 함수
+    """
+    print("\n🏰 [하이랄 성 현재 상황] 🏰")
+    
+    # 2차원 리스트를 반복문으로 한 줄씩 꺼내서 출력하기 (필수 조건: 반복문)
+    for row in map_data:
+        for cell in row:
+            # 글자 뒤에 공백을 한 칸 띄어서 보기 좋게 정렬해 줘
+            print(cell, end=" ")
+        print()  # 한 행을 다 출력하면 줄바꿈
+        
+    print(f"❤️ 링크의 현재 체력: {hp}")
+    print("-" * 25)
+# 메인 게임 루프 시작
+game_running = True
 
-def show_intro():
-    """프로그램 제목과 안내를 출력한다."""
-    print("=" * 40)
-    print("AI 활용 자유 주제 파이썬 미니 프로젝트")
-    print("예시: 기분과 시간에 따른 활동 추천기")
-    print("=" * 40)
+print("🗡️ 젤다의 전설: 하이랄 성 탈출 미니게임 시작 🗡️")
 
-
-def get_user_input():
-    """사용자에게 기분과 남은 시간을 입력받는다."""
-    mood = input("현재 기분을 입력하세요. 예: 피곤, 우울, 차분, 답답: ")
-    minutes = int(input("사용 가능한 시간을 분 단위로 입력하세요: "))
-    return mood, minutes
-
-
-def find_recommendations(data, mood, minutes):
-    """2차원 리스트를 반복하며 조건에 맞는 활동을 찾는다."""
-    results = []
-
-    for row in data:
-        name = row[0]
-        required_minutes = row[1]
-        recommended_mood = row[2]
-        activity_type = row[3]
-
-        # 조건문: 사용자의 기분과 시간이 활동 조건에 맞는지 판단한다.
-        if recommended_mood == mood and required_minutes <= minutes:
-            results.append([name, required_minutes, activity_type])
-
-    return results
-
-
-def print_result(results):
-    """추천 결과를 출력한다."""
-    print("\n[추천 결과]")
-
-    if len(results) == 0:
-        print("조건에 맞는 활동이 없습니다.")
-        print("시간을 늘리거나 다른 기분을 입력해 보세요.")
+while game_running and player_hp > 0:
+    # 1. 현재 맵 상황 보여주기 (우리가 만든 함수 호출!)
+    display_game(castle_map, player_hp)
+    
+    # 2. 사용자 입력 받기
+    move = input("어디로 이동하시겠습니까? (W:위, A:왼쪽, S:아래, D:오른쪽): ").upper()
+    
+    # 임시로 이동할 좌표를 현재 좌표로 초기화
+    next_row = player_row
+    next_col = player_col
+    
+    # 3. 입력에 따른 좌표 계산 (조건문 활용)
+    if move == "W":
+        next_row -= 1
+    elif move == "S":
+        next_row += 1
+    elif move == "A":
+        next_col -= 1
+    elif move == "D":
+        next_col += 1
     else:
-        for item in results:
-            print(f"- {item[0]} / {item[1]}분 / 유형: {item[2]}")
+        print("❌ 잘못된 입력입니다! W, A, S, D 중에서 입력하세요.")
+        continue # 아래 코드를 실행하지 않고 다시 입력받음
 
+    # 4. [빈칸 퀴즈!] 벽('W') 체크 및 이동 조건문 만들기
+    # 만약 이동하려는 칸(castle_map[next_row][next_col])이 벽("W")이 아니라면?
+    if castle_map[next_row][next_col] != "W":
+        
+        # 이동한 칸의 원래 오브젝트가 무엇인지 확인하기
+        target = castle_map[next_row][next_col]
+        
+        # 만약 경비병("E")을 만났다면?
+        if target == "E":
+            print("💥 경비병의 공격을 받아 체력이 5 깎였습니다!")
+            player_hp -= 5
+            
+        # 만약 젤다 공주("Z")를 만났다면?
+        elif target == "Z":
+            print("👑 젤다 공주를 구출했습니다! 하이랄 성 탈출 성공! 👑")
+            game_running = False
+            
+        # 맵 업데이트: 기존 위치는 빈길(".")로 만들고 새 위치를 "P"로 변경
+        castle_map[player_row][player_col] = "."
+        player_row = next_row
+        player_col = next_col
+        castle_map[player_row][player_col] = "P"
+        
+    else:
+        # 이동하려는 칸이 벽("W")인 경우 처리할 코드를 적어보자!
+        # [네가 채워야 할 곳]: "벽에 부딪혔습니다!" 라고 print() 해주기
+        pass
 
-def main():
-    show_intro()
-    mood, minutes = get_user_input()
-    results = find_recommendations(activities, mood, minutes)
-    print_result(results)
-
-
-# ------------------------------------------------------------
-# 3. 프로그램 실행
-# ------------------------------------------------------------
-main()
+# 게임 종료 조건 검사
+if player_hp <= 0:
+    print("💀 링크가 쓰러졌습니다... 게임 오버! 💀")
